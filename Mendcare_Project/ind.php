@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mendcare Service - บริการซ่อมบำรุงครบวงจร โดยทีมช่างมืออาชีพ พร้อมรับประกันผลงาน">
     <title>Mendcare Service - ระบบช่างซ่อมมืออาชีพ</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="ind.css">
-
-
 </head>
 <body>
     <!-- Sidebar -->
@@ -24,23 +24,67 @@
                     <i class="fas fa-wrench"></i>
                     Mendcare Service
                 </a>
-                    <!-- In the nav-menu ul, replace the profile icon with a dropdown or separate login/register links -->
-<nav>
-    <ul class="nav-menu">
-        <li>
-            <input type="search" class="search-box" placeholder="ค้นหาบริการ...">
-        </li>
-        <li><a href="/notifications"><i class="fas fa-bell"></i></a></li>
-        <li><a href="/cart"><i class="fas fa-shopping-cart"></i></a></li>
-        <li class="auth-links">
-            <a href="login.html" class="login-btn"><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</a>
-            <!-- <a href="register" class="register-btn"><i class="fas fa-user-plus"></i> สมัครสมาชิก</a> -->
-        </li>
-    </ul>
-</nav>
-
+                <nav>
+                    <ul class="nav-menu">
+                         <li class="search-container">
+                              <input type="search" class="search-box" placeholder="ค้นหาบริการ...">
+                                <i class="fas fa-search search-icon"></i>
+                        </li>
+                        <li><a href="/notifications"><i class="fas fa-bell"></i></a></li>
+                        <li><a href="/cart"><i class="fas fa-shopping-cart"></i></a></li>
+                        <li class="auth-links">
+                            <a href="javascript:void(0);" class="login-btn" onclick="openLoginPopup()">
+                                <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </header>
+
+                    <!-- Modal Login -->
+                    <div id="loginPopup" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeLoginPopup()">&times;</span>
+                <h1>เข้าสู่ระบบ / สมัครสมาชิก</h1>
+
+                <div id="login-form" class="form-container active">
+                    <form action="login.php" method="POST">
+                        <label for="username">ชื่อผู้ใช้:</label>
+                        <input type="text" id="username" name="username" required>
+
+                        <label for="password">รหัสผ่าน:</label>
+                        <input type="password" id="password" name="password" required>
+
+                        <button type="submit">เข้าสู่ระบบ</button>
+                    </form>
+                    <div class="links">
+                        <p>ยังไม่มีบัญชีใช่ไหม? <a href="javascript:void(0);" onclick="showRegisterForm()">สมัครสมาชิก</a></p>
+                    </div>
+                </div>
+
+                <div id="register-form" class="form-container">
+                    <form action="register.php" method="POST">
+                        <label for="username-register">ชื่อผู้ใช้:</label>
+                        <input type="text" id="username-register" name="username" required>
+
+                        <label for="email">อีเมล:</label>
+                        <input type="email" id="email" name="email" required>
+
+                        <label for="password-register">รหัสผ่าน:</label>
+                        <input type="password" id="password-register" name="password" required>
+
+                        <label for="password-register">เบอร์โทรศัพท์:</label>
+                        <input type="text" id="username-register" name="username" required>
+
+                        <button type="submit">สมัครสมาชิก</button>
+                    </form>
+                    <div class="links">
+                        <p>มีบัญชีอยู่แล้ว? <a href="javascript:void(0);" onclick="showLoginForm()">เข้าสู่ระบบ</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <main>
             <section class="hero">
@@ -105,7 +149,7 @@
             <img src="image/air.jpg" alt="ล้างแอร์">
             <h3>ล้างแอร์</h3>
             <p>เริ่มต้น 500 บาท</p>
-            <span class="image/popular-badge">ยอดนิยม</span>
+            <span class="popular-badge">ยอดนิยม</span>
         </div>
         <div class="popular-service-card">
             <img src="image/water.jpg" alt="ซ่อมท่อน้ำรั่ว">
@@ -173,9 +217,7 @@
             <p>มีประกันความเสียหายระหว่างการซ่อมสูงสุด 100,000 บาท</p>
         </div>
     </div>
-</section>
-
-            
+</section>      
         </main>
 
         <footer>
@@ -202,41 +244,52 @@
             </div>
         </footer>
     </div>
+    </div>
 
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-            const mainContent = document.getElementById('main-content');
-            
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-            
-            if (sidebar.classList.contains('active')) {
-                mainContent.style.marginLeft = '280px';
-                document.body.style.overflow = 'hidden';
-            } else {
-                mainContent.style.marginLeft = '0';
-                document.body.style.overflow = 'auto';
-            }
-        }
+<script>
+// ฟังก์ชันสำหรับ Modal Login
+function openLoginPopup() {
+    document.getElementById("loginPopup").style.display = "flex";
+}
 
-        // Close sidebar when clicking outside
-        document.addEventListener('click', (e) => {
-            const sidebar = document.getElementById('sidebar');
-            const navToggle = document.querySelector('.nav-toggle');
-            
-            if (!sidebar.contains(e.target) && !navToggle.contains(e.target) && sidebar.classList.contains('active')) {
-                toggleSidebar();
-            }
-        });
+function closeLoginPopup() {
+    document.getElementById("loginPopup").style.display = "none";
+}
 
-        // Close sidebar when pressing Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('active')) {
-                toggleSidebar();
-            }
-        });
-    </script>
+function showLoginForm() {
+    document.getElementById("login-form").classList.add("active");
+    document.getElementById("register-form").classList.remove("active");
+}
+
+function showRegisterForm() {
+    document.getElementById("register-form").classList.add("active");
+    document.getElementById("login-form").classList.remove("active");
+}
+
+// ฟังก์ชันสำหรับ Sidebar
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+// Event Listeners
+window.onclick = function(event) {
+    let modal = document.getElementById("loginPopup");
+    let overlay = document.getElementById("overlay");
+    
+    if (event.target === modal) {
+        closeLoginPopup();
+    }
+    if (event.target === overlay) {
+        toggleSidebar();
+    }
+}
+</script>
+
+</body>
+</html>
 </body>
 </html>
