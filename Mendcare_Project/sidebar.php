@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -13,7 +14,7 @@
         <i class="fas fa-times"></i>
     </span>
     <ul class="sidebar-menu">
-        <li><a href="/"><i class="fas fa-home"></i> หน้าแรก</a></li>
+        <li><a href="ind.php"><i class="fas fa-home"></i> หน้าแรก</a></li>
         <li><a href="/services"><i class="fas fa-tools"></i> บริการทั้งหมด</a></li>
         <li><a href="CollectService.php"><i class="fas fa-calendar-alt"></i> จองบริการ</a></li>
         <li><a href="/tracking"><i class="fas fa-map-marker-alt"></i> ติดตามงาน</a></li>
@@ -27,6 +28,8 @@
  
 <!-- Overlay -->
 <div id="overlay" class="overlay"></div>
+
+
 
 <script>
         function toggleSidebar() {
