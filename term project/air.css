@@ -1,15 +1,18 @@
+/* Container and Layout */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 15px;
 }
 
+/* Service Introduction */
 .service-intro {
     text-align: center;
     padding: 50px 0;
     background: var(--light-gray);
 }
 
+/* Grid Layout */
 .service-grid {
     padding: 50px 0;
 }
@@ -21,6 +24,7 @@
     margin-bottom: 30px;
 }
 
+/* Grid Items */
 .grid-item {
     background: white;
     border-radius: 10px;
@@ -35,7 +39,7 @@
 
 .grid-item img {
     width: 100%;
-    height: 200px;
+    height: 250px;
     object-fit: cover;
 }
 
@@ -52,65 +56,21 @@
     font-weight: bold;
 }
 
-.button-group {
+/* Grid Item Buttons */
+.grid-item .button-group {
     display: flex;
     gap: 10px;
     padding: 15px;
 }
 
-.cart-btn, .book-btn {
+.grid-item .cart-btn, 
+.grid-item .book-btn {
     flex: 1;
     padding: 8px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
     font-size: 14px;
-    transition: all 0.3s ease;
 }
 
-.cart-btn {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.book-btn {
-    background-color: var(--secondary-color);
-    color: white;
-}
-
-.cart-btn:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-}
-
-.book-btn:hover {
-    background-color: #ca8200;
-    transform: translateY(-2px);
-}
-
-.button-group i {
-    margin-right: 5px;
-}
-
-@media (max-width: 992px) {
-    .grid-row {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .grid-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 576px) {
-    .grid-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Modal Styles */
+/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -126,21 +86,22 @@
 .modal-content {
     background: white;
     margin: 5% auto;
-    padding: 25px;
-    width: 90%;
-    max-width: 3000px;
-    border-radius: 30px;
+    padding: 30px;
+    width: 80%;
+    max-width: 1000px;
+    border-radius: 15px;
     position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
+/* Modal Product Details */
 .product-details {
     display: flex;
-    gap: 30px;
+    gap: 40px;
 }
 
 .modal-image-container {
-    flex: 0 0 45%;
+    flex: 1;
+    max-width: 500px;
 }
 
 .modal-image-container img {
@@ -148,18 +109,19 @@
     height: 400px;
     object-fit: cover;
     border-radius: 10px;
-    align-items: center;
 }
 
 .product-info {
     flex: 1;
+    padding: 20px;
 }
 
+/* Modal Close Button */
 .close {
     position: absolute;
     right: 25px;
-    top: 15px;
-    font-size: 35px;
+    top: 20px;
+    font-size: 28px;
     cursor: pointer;
     color: #666;
     transition: color 0.3s ease;
@@ -169,40 +131,91 @@
     color: #000;
 }
 
+/* Modal Content Styles */
 .price {
-    color: #ff6b00;
     font-size: 24px;
+    color: var(--secondary-color);
+    margin: 20px 0;
     font-weight: bold;
-    margin: 15px 0;
 }
 
 .description h3 {
-    margin: 20px 0 10px;
+    margin: 20px 0;
+    color: #333;
 }
 
 .description ul {
     padding-left: 20px;
-    margin: 0;
 }
 
 .description li {
-    margin: 10px 0;
+    margin: 12px 0;
     color: #666;
+    line-height: 1.5;
+}
+
+/* Modal Buttons */
+.modal .button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.modal .cart-btn,
+.modal .book-btn {
+    padding: 12px 25px;
+    font-size: 16px;
+}
+
+/* Shared Button Styles */
+.cart-btn, .book-btn {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cart-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.book-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.cart-btn:hover, 
+.book-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(110%);
 }
 
 /* Responsive Design */
+@media (max-width: 992px) {
+    .grid-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
+    .grid-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
     .product-details {
         flex-direction: column;
     }
-    
-    .modal-image-container {
-        flex: none;
+    .modal-content {
+        width: 90%;
+        margin: 3% auto;
     }
-    
     .modal-image-container img {
         height: 300px;
     }
 }
 
-
+@media (max-width: 576px) {
+    .grid-row {
+        grid-template-columns: 1fr;
+    }
+}
