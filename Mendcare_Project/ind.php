@@ -1,3 +1,70 @@
+<?php
+include 'connect.php';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = $_POST["name"];
+    $email = $_POST["email"];
+    $password = password_hash($_POST["password"], PASSWORD_DEFAULT); // เข้ารหัสรหัสผ่าน
+    $phone = $_POST["phone"];
+
+    // ตรวจสอบว่าอีเมลซ้ำหรือไม่
+    $checkEmail = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $checkEmail->bind_param("s", $email);
+    $checkEmail->execute();
+    $result = $checkEmail->get_result();
+
+    if ($result->num_rows > 0) {
+        echo "อีเมลนี้ถูกใช้แล้ว!";
+    } else {
+        // เพิ่มข้อมูลลงในฐานข้อมูล
+        $stmt = $conn->prepare("INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $name, $email, $password, $phone);
+
+        if ($stmt->execute()) {
+            echo "สมัครสมาชิกสำเร็จ!";
+        } else {
+            echo "เกิดข้อผิดพลาด: " . $stmt->error;
+        }
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
+
+<?php
+include 'connect.php';
+session_start();
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = $_POST["email"];
+    $password = $_POST["password"];
+
+    // ดึงข้อมูลผู้ใช้จากฐานข้อมูล
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user["password"])) {
+            // ตั้งค่าข้อมูลเซสชัน
+            $_SESSION["user_id"] = $user["user_id"];
+            $_SESSION["name"] = $user["name"];
+            echo "เข้าสู่ระบบสำเร็จ!";
+        } else {
+            echo "รหัสผ่านไม่ถูกต้อง!";
+        }
+    } else {
+        echo "ไม่พบผู้ใช้!";
+    }
+
+    $stmt->close();
+    $conn->close();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -65,8 +132,9 @@
                         <input type="email" id="email" name="email" required>
                         <label for="password-register">รหัสผ่าน:</label>
                         <input type="password" id="password-register" name="password" required>
-                        <label for="password-register">เบอร์โทรศัพท์:</label>
-                        <input type="text" id="username-register" name="username" required>
+                        <label for="phone">เบอร์โทรศัพท์:</label>
+                        <input type="text" id="phone" name="phone" required>
+
                         <button type="submit">สมัครสมาชิก</button>
                     </form>
                     <div class="links">
