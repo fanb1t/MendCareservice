@@ -1,13 +1,9 @@
+<?php include 'sidebar.php'; ?>
 <?php
-session_start();
-require_once 'connect.php';
-
-// เพิ่มการตรวจสอบการเชื่อมต่อฐานข้อมูล
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Check login status
 if (!isset($_SESSION['user_id'])) {
     header('Location: ind.php');
     exit();
@@ -15,10 +11,10 @@ if (!isset($_SESSION['user_id'])) {
 
 // ดึงข้อมูลตะกร้า
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT r.*, s.name, s.price, s.image 
-        FROM requests r 
-        JOIN sub_services s ON r.sub_service_id = s.sub_services_id 
-        WHERE r.user_id = ? AND r.status = 'pending'";
+$sql = "SELECT c.*, s.name, s.price, s.image, s.sub_services_id 
+        FROM cart c 
+        JOIN sub_services s ON c.sub_service_id = s.sub_services_id 
+        WHERE c.user_id = ?";
 
 try {
     $stmt = $conn->prepare($sql);
@@ -33,10 +29,10 @@ try {
 // จัดการการลบรายการ
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'remove_item') {
-        $request_id = $_POST['request_id'];
-        $delete_sql = "DELETE FROM requests WHERE request_id = ? AND user_id = ?";
+        $cart_id = $_POST['cart_id'];
+        $delete_sql = "DELETE FROM cart WHERE cart_id = ? AND user_id = ?";
         $stmt = $conn->prepare($delete_sql);
-        $stmt->bind_param("ii", $request_id, $user_id);
+        $stmt->bind_param("ii", $cart_id, $user_id);
         
         if ($stmt->execute()) {
             echo json_encode(['status' => 'success']);
@@ -267,38 +263,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     </style>
 </head>
 <body>
-    <?php include 'sidebar.php'; ?>
-
-        <main class="cart-container">
-            <?php if (empty($cart_items)): ?>
-                <div class="empty-cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h2>ตะกร้าว่างเปล่า</h2>
-                    <p>กรุณาเลือกบริการที่ต้องการ</p>
-                    <a href="ind.php" class="continue-shopping">เลือกซื้อบริการ</a>
-                </div>
+    <main class="cart-container">
+        <?php if (empty($cart_items)): ?>
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <h2>ตะกร้าว่างเปล่า</h2>
+                <p>กรุณาเลือกบริการที่ต้องการ</p>
+                <a href="ind.php" class="continue-shopping">เลือกซื้อบริการ</a>
+            </div>
             <?php else: ?>
-                <div class="cart-items">
-                    <h2>รายการบริการที่เลือก</h2>
-                    <?php foreach ($cart_items as $item): ?>
-                        <div class="cart-item" data-id="<?php echo $item['request_id']; ?>">
-                            <input type="checkbox" class="item-checkbox" 
-                                   data-price="<?php echo $item['price']; ?>"
-                                   onchange="updateTotal()">
-                            <img src="image/<?php echo htmlspecialchars($item['image']); ?>" 
-                                 alt="<?php echo htmlspecialchars($item['name']); ?>">
-                            <div class="item-details">
-                                <h3><?php echo htmlspecialchars($item['name']); ?></h3>
-                                <p class="price">฿<?php echo number_format($item['price'], 2); ?></p>
-                            </div>
-                            <button class="remove-btn" onclick="removeItem(<?php echo $item['request_id']; ?>)">
-                                <i class="fas fa-trash"></i>
-                            </button>
+            <div class="cart-items">
+                <h2>รายการบริการที่เลือก</h2>
+                <?php foreach ($cart_items as $item): ?>
+                    <div class="cart-item" data-id="<?php echo $item['cart_id']; ?>">
+                        <input type="checkbox" 
+                            class="item-checkbox" 
+                            data-price="<?php echo $item['price']; ?>"
+                            data-sub-service-id="<?php echo $item['sub_services_id']; ?>"
+                            onchange="updateTotal()">
+                        <img src="image/<?php echo htmlspecialchars($item['image']); ?>" 
+                            alt="<?php echo htmlspecialchars($item['name']); ?>">
+                        <div class="item-details">
+                            <h3><?php echo htmlspecialchars($item['name']); ?></h3>
+                            <p class="price">฿<?php echo number_format($item['price'], 2); ?></p>
                         </div>
-                    <?php endforeach; ?>
-                </div>
+                        <button class="remove-btn" onclick="removeItem(<?php echo $item['cart_id']; ?>)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                <?php endforeach; ?>
+            </div>
 
-                <div class="cart-summary">
+            <div class="cart-summary">
                     <h2>สรุปรายการ</h2>
                     <div class="summary-details">
                         <div class="summary-row">
@@ -323,13 +319,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     <i class="fas fa-arrow-left"></i>
                     <span>ย้อนกลับ</span>
                     </a>
-                 </div>
-            <?php endif; ?>
-        </main>
-    </div>
+                </div>
+        <?php endif; ?>
+    </main>
 
     <script>
-        function removeItem(requestId) {
+        function removeItem(cartId) {
             Swal.fire({
                 title: 'ยืนยันการลบ',
                 text: "คุณต้องการลบรายการนี้ใช่หรือไม่?",
@@ -341,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 if (result.isConfirmed) {
                     const formData = new FormData();
                     formData.append('action', 'remove_item');
-                    formData.append('request_id', requestId);
+                    formData.append('cart_id', cartId);
 
                     fetch('CollectService.php', {
                         method: 'POST',
@@ -350,7 +345,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            document.querySelector(`.cart-item[data-id="${requestId}"]`).remove();
+                            document.querySelector(`.cart-item[data-id="${cartId}"]`).remove();
                             if (document.querySelectorAll('.cart-item').length === 0) {
                                 location.reload();
                             }
@@ -360,7 +355,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
             });
         }
-
         function updateTotal() {
             const checkboxes = document.querySelectorAll('.item-checkbox');
             let subtotal = 0;
@@ -395,7 +389,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 window.location.href = `insertdata.php?items=${selectedItems.join(',')}`;
             }
         }
+        function proceedToCheckout() {
+            const selectedItems = [];
+            document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+                const subServiceId = checkbox.dataset.subServiceId;
+                selectedItems.push(subServiceId);
+            });
 
+            if (selectedItems.length > 0) {
+                window.location.href = `insertdata.php?items=${selectedItems.join(',')}`;
+            }
+        }
     </script>
 </body>
 </html>

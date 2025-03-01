@@ -1,41 +1,64 @@
-<?php include 'header.php'; ?>
-<?php 
+<?php include 'sidebar.php'; ?> 
+<?php
+// รับค่า sub_service_id จาก URL
+$selected_sub_services = isset($_GET['items']) ? explode(',', $_GET['items']) : [];
+
+// ในส่วนการบันทึกข้อมูล
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
+    $request_date = date('Y-m-d H:i:s', strtotime($_POST['datetime']));
 
-    
-    // Update users table
-    $stmt = $conn->prepare("UPDATE users SET name_last = ?, address = ?, phone = ? WHERE user_id = ?");
-    $stmt->bind_param("sssi", 
-        $_POST['name'],
-        $_POST['address'],
-        $_POST['phone'],
-        $user_id
-    );
-    $stmt->execute();
+    $conn->begin_transaction();
 
-    // Insert into requests table
-    $stmt = $conn->prepare("INSERT INTO requests (user_id, request_date, notes) VALUES (?, ?, ?)");
-    $stmt->bind_param("iss",
-        $user_id,
-        $_POST['datetime'],
-        $_POST['description']
-    );
+    try {
+        // Update users table
+        $stmt = $conn->prepare("UPDATE users SET name_last = ?, address = ?, phone = ? WHERE user_id = ?");
+        $stmt->bind_param("sssi", 
+            $_POST['name'],
+            $_POST['address'],
+            $_POST['phone'],
+            $user_id
+        );
+        $stmt->execute();
     
-    if ($stmt->execute()) {
+        // สร้าง request หลัก
+        $stmt = $conn->prepare("INSERT INTO requests (user_id, request_date, notes) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", 
+            $user_id, 
+            $request_date, 
+            $_POST['description']
+        );
+        $stmt->execute();
+        $request_id = $conn->insert_id;
+    
+        // บันทึกบริการที่เลือกลงตาราง request_services
+        foreach ($selected_sub_services as $sub_service_id) {
+            $stmt = $conn->prepare("INSERT INTO request_services (request_id, sub_service_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $request_id, $sub_service_id);
+            $stmt->execute();
+        }
+    
+        // เพิ่มโค้ดตรงนี้ - ลบรายการในตะกร้า
+        $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND sub_service_id IN (" . str_repeat('?,', count($selected_sub_services) - 1) . '?)');
+        $params = array_merge([$user_id], $selected_sub_services);
+        $types = str_repeat('i', count($params));
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+    
+        $conn->commit();
+        header('Location: success.php');
+        exit();
+    
+
+    } catch (Exception $e) {
+        $conn->rollback();
         echo "<script>
-            alert('บันทึกข้อมูลสำเร็จ');
-            window.location.href = 'index.php';
-        </script>";
-    } else {
-        echo "<script>
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล: " . $e->getMessage() . "');
             window.history.back();
         </script>";
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="th">
@@ -49,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
 
 <style>
 :root {
-    --primary-color: #2196F3;
+    --primary-color: #d00000;
     --success-color: #28a745;
     --text-color: #333;
     --border-color: #ddd;
@@ -252,8 +275,6 @@ input:focus, textarea:focus {
 </style>
 
 <body>
-<?php include 'sidebar.php'; ?> 
-
     <div class="container">
         <div class="progress">
             <div id="step1" class="step active"><i class="fas fa-user"></i></div>
@@ -318,7 +339,7 @@ input:focus, textarea:focus {
                     <span id="confirm-phone" class="value"></span>
                 </div>
             </div>
-            <form action="submit.php" method="post">
+            <form action="" method="post" class="service-form">
                 <input type="hidden" name="name" id="hidden-name">
                 <input type="hidden" name="address" id="hidden-address">
                 <input type="hidden" name="datetime" id="hidden-datetime">

@@ -1,228 +1,181 @@
 <?php
 session_start();
+require_once 'connect.php';
 
-// Calculate total amount from selected services
-$total_amount = 0;
-if (!empty($_SESSION["selected_services"])) {
-    // Assuming each service costs 500 baht for this example
-    $total_amount = count($_SESSION["selected_services"]) * 500;
-}
+$request_id = $_GET['request_id'];
+
+$sql = "SELECT r.request_id, 
+               GROUP_CONCAT(s.name) as service_names,
+               GROUP_CONCAT(s.price) as service_prices,
+               SUM(s.price) as total_amount
+        FROM requests r 
+        JOIN request_services rs ON r.request_id = rs.request_id
+        JOIN sub_services s ON rs.sub_service_id = s.sub_services_id 
+        WHERE r.request_id = ?
+        GROUP BY r.request_id";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $request_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$service_data = $result->fetch_assoc();
+
+$service_names = explode(',', $service_data['service_names']);
+$service_prices = explode(',', $service_data['service_prices']);
+$total_amount = $service_data['total_amount'];
 ?>
 
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ชำระเงิน - Mendcare Service</title>
-    <link rel="stylesheet" href="ind.css">
-    <link rel="stylesheet" href="payment.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .payment-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .payment-summary {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .total-amount {
+            margin-top: 20px;
+            padding: 15px;
+            text-align: right;
+            font-size: 1.2em;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .payment-option {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            transition: transform 0.2s;
+        }
+
+        .payment-option:hover {
+            transform: translateY(-2px);
+            background: #f8f9fa;
+        }
+
+        .payment-option img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .payment-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .bank-details {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-    <style>
-        .payment-summary {
-    background: #f5f5f5;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.service-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #ddd;
-}
-
-.total-amount {
-    margin-top: 20px;
-    text-align: right;
-    font-size: 1.2em;
-}
-
-.payment-methods {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 30px;
-}
-
-.payment-option {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    transition: transform 0.2s;
-}
-
-.payment-option:hover {
-    transform: translateY(-2px);
-}
-
-.payment-option img {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-}
-
-.payment-details {
-    margin-top: 30px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
-
-    </style>
     <?php include 'sidebar.php'; ?>
-
-    <div id="main-content">
-        <header>
-            <div class="header-container">
-                <div class="nav-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </div>
-                <a href="/" class="logo">
-                    <i class="fas fa-wrench"></i>
-                    Mendcare Service
-                </a>
+    
+    <div class="payment-container">
+        <h1>ชำระเงิน</h1>
+        
+        <div class="payment-summary">
+            <h2>สรุปรายการ</h2>
+            <div class="selected-services">
+                <?php for($i = 0; $i < count($service_names); $i++): ?>
+                    <div class="service-item">
+                        <span><?php echo htmlspecialchars($service_names[$i]); ?></span>
+                        <span>฿<?php echo number_format($service_prices[$i], 2); ?></span>
+                    </div>
+                <?php endfor; ?>
             </div>
-        </header>
-
-        <div class="container">
-            <h1>ชำระเงิน</h1>
-            <div class="payment-summary">
-                <h2>สรุปรายการ</h2>
-                <div class="selected-services">
-                    <?php foreach ($_SESSION["selected_services"] as $service): ?>
-                        <div class="service-item">
-                            <span><?php echo $service; ?></span>
-                            <span>฿500</span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="total-amount">
-                    <strong>ยอดรวมทั้งหมด: ฿<?php echo $total_amount; ?></strong>
-                </div>
-            </div>
-
-            <div class="payment-methods">
-                <h2>เลือกวิธีการชำระเงิน</h2>
-                
-                <div class="payment-option" onclick="showPaymentDetails('credit')">
-                    <img src="credit-card-icon.png" alt="Credit Card">
-                    <span>บัตรเครดิต/เดบิต</span>
-                </div>
-
-                <div class="payment-option" onclick="showPaymentDetails('promptpay')">
-                    <img src="promptpay-icon.png" alt="PromptPay">
-                    <span>พร้อมเพย์</span>
-                </div>
-
-                <div class="payment-option" onclick="showPaymentDetails('truemoney')">
-                    <img src="truemoney-icon.png" alt="TrueMoney">
-                    <span>ทรูมันนี่ วอลเล็ท</span>
-                </div>
-            </div>
-
-            <div id="payment-details" class="payment-details" style="display: none;">
-                <!-- Payment details will be loaded here -->
+            <div class="total-amount">
+                ยอดรวมทั้งหมด: ฿<?php echo number_format($total_amount, 2); ?>
             </div>
         </div>
+
+        <div class="payment-methods">
+            <div class="payment-option" onclick="showPaymentDetails('promptpay')">
+                <img src="images/promptpay.png" alt="PromptPay">
+                <span>พร้อมเพย์</span>
+            </div>
+            <div class="payment-option" onclick="showPaymentDetails('bank')">
+                <img src="images/bank.png" alt="Bank Transfer">
+                <span>บัญชีธนาคาร</span>
+            </div>
+        </div>
+
+        <div id="payment-details" class="payment-details"></div>
     </div>
 
-    <?php
-require_once 'vendor/autoload.php';
-use chillerlan\QRCode\QRCode;
-use chillerlan\QRCode\QROptions;
-
-// Your PromptPay ID (Tax ID or Phone number)
-$promptpay_id = "0899999999";
-$amount = isset($_GET['amount']) ? $_GET['amount'] : 0;
-
-// Generate PromptPay payload
-function generatePayload($id, $amount = 0) {
-    // PromptPay payload format implementation
-    // This is a simplified version - you'll need to implement the actual PromptPay format
-    $payload = "00020101021229370016A000000677010111"
-             . strlen($id) . $id
-             . "5802TH53037646304";
-    
-    if ($amount > 0) {
-        $payload .= str_pad(number_format($amount, 2, '.', ''), 13, '0', STR_PAD_LEFT);
-    }
-    
-    return $payload;
-}
-
-$payload = generatePayload($promptpay_id, $amount);
-$qrcode = new QRCode(new QROptions([
-    'outputType' => QRCode::OUTPUT_IMAGE_PNG,
-    'eccLevel' => QRCode::ECC_L
-]));
-
-header('Content-Type: image/png');
-echo $qrcode->render($payload);
-?>
     <script>
-    
-        function showPaymentDetails(method) {
-    const detailsDiv = document.getElementById('payment-details');
-    detailsDiv.style.display = 'block';
-    
-    switch(method) {
-        case 'credit':
-            detailsDiv.innerHTML = `
-                <h3>ชำระผ่านบัตรเครดิต/เดบิต</h3>
-                <form id="credit-card-form">
-                    <div class="form-group">
-                        <label>หมายเลขบัตร</label>
-                        <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>วันหมดอายุ</label>
-                            <input type="text" placeholder="MM/YY" required>
-                        </div>
-                        <div class="form-group">
-                            <label>CVV</label>
-                            <input type="text" placeholder="xxx" required>
-                        </div>
-                    </div>
-                    <button type="submit">ชำระเงิน</button>
-                </form>
-            `;
-            break;
-            
-        case 'promptpay':
+    function showPaymentDetails(method) {
+        const detailsDiv = document.getElementById('payment-details');
+        detailsDiv.style.display = 'block';
+        
+        if(method === 'promptpay') {
             detailsDiv.innerHTML = `
                 <h3>ชำระผ่านพร้อมเพย์</h3>
                 <div class="qr-container">
-                    <img src="generate_qr.php" alt="PromptPay QR Code">
-                    <p>สแกนเพื่อชำระเงิน</p>
+                    <img src="generate_qr.php?amount=<?php echo $total_amount; ?>" alt="PromptPay QR">
+                    <p>สแกน QR Code เพื่อชำระเงิน</p>
                 </div>
             `;
-            break;
-            
-        case 'truemoney':
+        } else if(method === 'bank') {
             detailsDiv.innerHTML = `
-                <h3>ชำระผ่านทรูมันนี่ วอลเล็ท</h3>
-                <form id="truemoney-form">
-                    <div class="form-group">
-                        <label>หมายเลขโทรศัพท์</label>
-                        <input type="tel" placeholder="0xxxxxxxxx" required>
-                    </div>
-                    <button type="submit">ดำเนินการต่อ</button>
-                </form>
+                <h3>ชำระผ่านบัญชีธนาคาร</h3>
+                <div class="bank-details">
+                    <p><strong>ธนาคาร:</strong> กสิกรไทย</p>
+                    <p><strong>ชื่อบัญชี:</strong> บริษัท เมนด์แคร์ เซอร์วิส จำกัด</p>
+                    <p><strong>เลขที่บัญชี:</strong> xxx-x-xxxxx-x</p>
+                </div>
             `;
-            break;
+        }
     }
-}
-
     </script>
 </body>
 </html>

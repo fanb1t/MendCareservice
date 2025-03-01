@@ -1,4 +1,3 @@
-<?php include 'header.php'; ?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -9,7 +8,7 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="ind.css">
+    <!-- <link rel="stylesheet" href="ind.css"> -->
 </head>
 <body>
     <!-- Sidebar -->
@@ -17,9 +16,8 @@
 
         <main>
             <section class="hero">
-                <h1>บริการซ่อมบำรุงมืออาชีพ</h1>
+                <h1>บริการซ่อมบำรุงอย่างทั่วถึง</h1>
                 <p>มั่นใจกับทีมช่างมืออาชีพที่ผ่านการรับรอง พร้อมรับประกันผลงาน</p>
-                <button class="cta-button">จองบริการเลย <i class="fas fa-arrow-right"></i></button>
             </section>
             <section class="services">
                 <h2 class="section-title">บริการของเรา</h2>

@@ -1,6 +1,13 @@
-<?php
-session_start();
-require 'connect.php';
+<?php 
+include 'sidebar.php';
+
+// Function to display alerts
+function displayAlert($message, $type = 'success') {
+    $_SESSION['alert'] = [
+        'message' => $message,
+        'type' => $type
+    ];
+}
 
 // ดึงข้อมูลบริการจากฐานข้อมูล
 $sql = "SELECT * FROM sub_services WHERE service_category_id = '3'";
@@ -10,75 +17,43 @@ while($row = $result->fetch_assoc()) {
     $services[] = $row;
 }
 
-// ตรวจสอบการล็อกอิน
-if(isset($_SESSION['user_id'])) {
+// Handle add to cart
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
+    if (!isset($_SESSION['user_id'])) {
+        displayAlert('กรุณาเข้าสู่ระบบก่อนเพิ่มสินค้าลงตะกร้า', 'error');
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit();
+    }
+
+    $sub_service_id = $_POST['sub_service_id'];
     $user_id = $_SESSION['user_id'];
-    $name = $_SESSION['name'];
-    $email = $_SESSION['email'];
-    $profile_picture = $_SESSION['profile_picture'];
-} else {
-    header('Location: ind.php');
-    exit();
-}
 
-// จัดการ logout
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'logout') {
-    session_destroy();
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'ออกจากระบบสำเร็จ'
-    ]);
-    exit();
-}
-?>
+    // ตรวจสอบว่ามีในตะกร้าแล้วหรือไม่
+    $check_sql = "SELECT cart_id FROM cart WHERE user_id = ? AND sub_service_id = ?";
+    $stmt = $conn->prepare($check_sql);
+    $stmt->bind_param("ii", $user_id, $sub_service_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-<?php
-// เพิ่มโค้ดส่วนการจัดการตะกร้าในส่วนบนของไฟล์หลังจาก require 'connect.php'
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'add_to_cart') {
-        $sub_service_id = $_POST['sub_service_id'];
-        $user_id = $_SESSION['user_id'];
-
-        // ตรวจสอบว่ามีในตะกร้าแล้วหรือไม่
-        $check_sql = "SELECT request_id FROM requests 
-                     WHERE user_id = ? AND sub_service_id = ? 
-                     AND status = 'pending'";
-        $stmt = $conn->prepare($check_sql);
-        $stmt->bind_param("ii", $user_id, $sub_service_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'บริการนี้อยู่ในตะกร้าแล้ว'
-            ]);
-            exit();
-        }
-
+    if ($result->num_rows > 0) {
+        displayAlert('บริการนี้อยู่ในตะกร้าแล้ว', 'error');
+    } else {
         // เพิ่มลงตะกร้า
-        $insert_sql = "INSERT INTO requests (user_id, sub_service_id, status) 
-                      VALUES (?, ?, 'pending')";
+        $insert_sql = "INSERT INTO cart (user_id, sub_service_id) VALUES (?, ?)";
         $stmt = $conn->prepare($insert_sql);
         $stmt->bind_param("ii", $user_id, $sub_service_id);
 
         if ($stmt->execute()) {
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'เพิ่มลงตะกร้าสำเร็จ'
-            ]);
+            displayAlert('เพิ่มลงตะกร้าสำเร็จ');
         } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'เกิดข้อผิดพลาด: ' . $conn->error
-            ]);
+            displayAlert('เกิดข้อผิดพลาด: ' . $conn->error, 'error');
         }
-        exit();
     }
+    
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit();
 }
 ?>
-
-<?php include 'sidebar.php'; ?>
 
 <!DOCTYPE html>
 <html lang="th">
@@ -87,209 +62,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>บริการซ่อมแอร์ - Mendcare Service</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
     <link rel="stylesheet" href="air.css">
 </head>
+<style>
+    .alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    text-align: center;
+    width: 80%;
+    margin: 20px auto;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+</style>
 <body>
-    <div id="main-content">
-        <header>
-            <div class="header-container">
-                <div class="nav-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
-                </div>
-                <a href="/" class="logo">
-                    <i class="fas fa-wrench"></i>
-                    Mendcare Service
-                </a>
-                <nav>
-                    <ul class="nav-menu">
-                        <li class="search-container">
-                            <input type="search" class="search-box" placeholder="ค้นหาบริการ...">
-                            <i class="fas fa-search search-icon"></i>
-                        </li>
-                        <li><a href="/notifications"><i class="fas fa-bell"></i></a></li>
-                        <li><a href="/cart"><i class="fas fa-shopping-cart"></i></a></li>
-                        <?php if(isset($_SESSION['user_id'])): ?>
-                            <li>
-                                <span class="logo"><?php echo $_SESSION['name']; ?></span>
-                            </li>
-                            <li class="auth-links">
-                                <a href="javascript:void(0);" onclick="handleLogout()" class="login-btn">
-                                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-                                </a>
-                            </li>
-                        <?php else: ?>
-                            <li class="auth-links">
-                                <a href="javascript:void(0);" class="login-btn" onclick="openLoginPopup()">
-                                    <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
+    <main>
+        <?php if (isset($_SESSION['alert'])): ?>
+            <div class="alert alert-<?php echo $_SESSION['alert']['type']; ?>">
+                <?php 
+                echo $_SESSION['alert']['message'];
+                unset($_SESSION['alert']);
+                ?>
             </div>
-        </header>
+        <?php endif; ?>
 
-        <main>
-            <section class="service-intro">
-                <div class="container">
-                    <h1>บริการซ่อมแอร์</h1>
-                    <p>ให้บริการซ่อม ล้าง ติดตั้ง และบำรุงรักษาแอร์ทุกชนิด โดยทีมช่างผู้เชี่ยวชาญ</p>
-                </div>
-            </section>
+        <section class="service-intro">
+            <div class="container">
+                <h1>บริการซ่อมแอร์</h1>
+                <p>ให้บริการซ่อม ล้าง ติดตั้ง และบำรุงรักษาแอร์ทุกชนิด โดยทีมช่างผู้เชี่ยวชาญ</p>
+            </div>
+        </section>
 
-            <section class="service-grid">
-                <div class="container">
-                    <div class="grid-row">
-                        <?php foreach($services as $index => $service): ?>
-                            <div class="grid-item" data-product="air<?php echo $index + 1; ?>">
-                                <img src="image/<?php echo $service['image']; ?>" alt="<?php echo $service['name']; ?>">
-                                <h3><?php echo $service['name']; ?></h3>
-                                <p>เริ่มต้น <?php echo number_format($service['price']); ?> บาท</p>
-                                <div class="button-group">
-                                    <button class="cart-btn" onclick="addToCart(<?php echo $service['sub_services_id']; ?>)">
+        <section class="service-grid">
+            <div class="container">
+                <div class="grid-row">
+                    <?php foreach($services as $index => $service): ?>
+                        <div class="grid-item">
+                            <img src="image/<?php echo $service['image']; ?>" alt="<?php echo $service['name']; ?>">
+                            <h3><?php echo $service['name']; ?></h3>
+                            <p>เริ่มต้น <?php echo number_format($service['price']); ?> บาท</p>
+                            <div class="button-group">
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="sub_service_id" value="<?php echo $service['sub_services_id']; ?>">
+                                    <button type="submit" name="add_to_cart" class="cart-btn">
                                         <i class="fas fa-cart-plus"></i> เพิ่มลงตะกร้า
                                     </button>
-                                    <button class="book-btn">
-                                        <i class="fas fa-calendar-check"></i> จองเลย
-                                    </button>
-                                </div>
+                                </form>
+                                <button class="book-btn">
+                                    <i class="fas fa-calendar-check"></i> จองเลย
+                                </button>
                             </div>
-                            <?php if(($index + 1) % 4 == 0 && $index + 1 < count($services)): ?>
-                                </div><div class="grid-row">
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer>
-            <p>&copy; 2025 Mendcare Service. สงวนลิขสิทธิ์.</p>
-        </footer>
-    </div>
-
-    <!-- Modal -->
-    <div id="productModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div class="product-details">
-                <div class="modal-image-container">
-                    <img id="modalImage" src="" alt="">
-                </div>
-                <div class="product-info">
-                    <h2 id="modalTitle"></h2>
-                    <p id="modalPrice" class="price"></p>
-                    <div class="description">
-                        <h3>รายละเอียดบริการ</h3>
-                        <ul id="modalDescription"></ul>
-                    </div>
-                    <div class="button-group">
-                        <button class="cart-btn">
-                            <i class="fas fa-cart-plus"></i> เพิ่มลงตะกร้า
-                        </button>
-                        <button class="book-btn">
-                            <i class="fas fa-calendar-check"></i> จองเลย
-                        </button>
-                    </div>
+                        </div>
+                        <?php if(($index + 1) % 4 == 0 && $index + 1 < count($services)): ?>
+                            </div><div class="grid-row">
+                        <?php endif; ?>
+                    <?php endforeach; ?>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <script>
-        const services = <?php echo json_encode($services); ?>;
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const modal = document.getElementById("productModal");
-            const modalImage = document.getElementById("modalImage");
-            const modalTitle = document.getElementById("modalTitle");
-            const modalPrice = document.getElementById("modalPrice");
-            const modalDescription = document.getElementById("modalDescription");
-            const closeModal = document.querySelector(".modal .close");
-
-            document.querySelectorAll(".grid-item").forEach(item => {
-                item.addEventListener("click", () => {
-                    const index = parseInt(item.getAttribute("data-product").replace("air", "")) - 1;
-                    const service = services[index];
-                    
-                    modalImage.src = 'image/' + service.image;
-                    modalTitle.textContent = service.name;
-                    modalPrice.textContent = `เริ่มต้น ${service.price} บาท`;
-                    modalDescription.innerHTML = service.description
-                        .split("\n")
-                        .map(desc => `<li>${desc}</li>`)
-                        .join("");
-                    
-                    modal.style.display = "block";
-                });
-            });
-
-            closeModal.addEventListener("click", () => {
-                modal.style.display = "none";
-            });
-
-            window.addEventListener("click", (event) => {
-                if (event.target === modal) {
-                    modal.style.display = "none";
-                }
-            });
-        });
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-
-        function handleLogout() {
-            const formData = new FormData();
-            formData.append('action', 'logout');
-
-            fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    Swal.fire({
-                        title: 'ออกจากระบบสำเร็จ!',
-                        text: 'ขอบคุณที่ใช้บริการ',
-                        icon: 'success',
-                        showConfirmButton: false,
-                        timer: 1000
-                    }).then(() => {
-                        window.location.reload();
-                    });
-                }
-            });
-        }
-        function addToCart(subServiceId) {
-    const formData = new FormData();
-    formData.append('action', 'add_to_cart');
-    formData.append('sub_service_id', subServiceId);
-
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            Swal.fire({
-                title: 'เพิ่มลงตะกร้าสำเร็จ!',
-                icon: 'success',
-                timer: 1500
-            });
-        } else {
-            Swal.fire({
-                title: 'แจ้งเตือน',
-                text: data.message,
-                icon: 'info'
-            });
-        }
-    });
-}
-    </script>
+    <footer>
+        <p>&copy; 2025 Mendcare Service. สงวนลิขสิทธิ์.</p>
+    </footer>
 </body>
 </html>
