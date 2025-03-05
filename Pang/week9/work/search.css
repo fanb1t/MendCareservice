@@ -1,0 +1,273 @@
+:root {
+    --primary-color: #4CAF50;
+    --secondary-color: #45a049;
+    --background-color: #f9f9f9;
+    --text-color: #333;
+    --shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    padding: 30px;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.section-title {
+    color: var(--primary-color);
+    text-align: center;
+    font-size: 2em;
+    margin: 20px 0;
+    position: relative;
+}
+
+
+
+/* Student Info Table */
+.student-info-table {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.student-info-table th,
+.student-info-table td {
+    padding: 15px 20px;
+    text-align: left;
+}
+
+.student-info-table th {
+    background: var(--primary-color);
+    color: white;
+    width: 30%;
+}
+
+/* Results Table */
+.results-table {
+    width: 90%;
+    max-width: 800px;
+    margin: 30px auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.results-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    text-align: left;
+}
+
+.results-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.results-table tr:hover {
+    background-color: #f1f8e9;
+}
+
+/* Buttons */
+.btn, 
+.btn-withdraw,
+.btn-delete,
+.btn-cancel {
+    border: none;
+    border-radius: 25px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn {
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 16px;
+    padding: 12px 30px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.btn-withdraw {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-delete {
+    background-color: #e53935;
+    color: white;
+}
+
+.btn-cancel {
+    background-color: #757575;
+    color: white;
+}
+
+.btn-withdraw:hover,
+.btn-delete:hover,
+.btn-cancel:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.add-course-button {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.back-link {
+    display: block;
+    text-align: center;
+    color: var(--primary-color);
+    text-decoration: none;
+    margin-top: 20px;
+    font-weight: 500;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    
+    .student-info-table,
+    .results-table {
+        width: 100%;
+    }
+    
+    .btn, 
+    .btn-withdraw,
+    .btn-delete,
+    .btn-cancel {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+}
+/* ปุ่มออกจากระบบ */
+.logout-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logout-button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.logout-button i {
+    font-size: 18px;
+}
+
+/* การแจ้งเตือน */
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: slideDown 0.5s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+    z-index: 1000;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+.notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    animation: slideDown 0.5s ease-out, fadeOut 0.5s ease-out 2.5s forwards;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.notification.error {
+    background-color: #f44336;
+    color: white;
+}
+
+.notification i {
+    font-size: 20px;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}

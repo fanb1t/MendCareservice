@@ -1,0 +1,49 @@
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+table th, table td {
+    border: 1px solid #dddddd;
+    text-align: center; /* จัดข้อความให้อยู่ตรงกลาง */
+    vertical-align: middle; /* จัดข้อความให้อยู่กลางแนวตั้ง */
+    padding: 10px;
+    width: 33.33%; /* แบ่งขนาดคอลัมน์ให้เท่ากัน */
+}
+
+table th {
+    background-color: #f4f4f4;
+    color: #333333;
+    font-weight: bold;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.student-info-table th,
+.student-info-table td {
+    width: 50%; /* ตารางข้อมูลนักศึกษาแบ่งคอลัมน์เป็น 2 ส่วน */
+}
+
+.results-table table th, 
+.results-table table td {
+    width: auto; /* ตารางผลการศึกษาปรับขนาดอัตโนมัติ */
+}
+
+.error {
+    color: red;
+    text-align: center;
+}
+
+.encouragement {
+    margin-top: 20px;
+    text-align: center;
+    color: #006400;
+    font-weight: bold;
+}
