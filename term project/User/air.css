@@ -1,0 +1,220 @@
+/* Container and Layout */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* Service Introduction */
+.service-intro {
+    text-align: center;
+    padding: 50px 0;
+    background: var(--light-gray);
+}
+
+/* Grid Layout */
+.service-grid {
+    padding: 50px 0;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* Grid Items */
+.grid-item {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.grid-item:hover {
+    transform: translateY(-5px);
+}
+
+.grid-item img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.grid-item h3 {
+    padding: 15px;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.grid-item p {
+    padding: 0 15px 15px;
+    margin: 0;
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+/* Grid Item Buttons */
+.grid-item .button-group {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+}
+
+.grid-item .cart-btn, 
+.grid-item .book-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 30px;
+    width: 80%;
+    max-width: 1000px;
+    border-radius: 15px;
+    position: relative;
+}
+
+/* Modal Product Details */
+.product-details {
+    display: flex;
+    gap: 40px;
+}
+
+.modal-image-container {
+    flex: 1;
+    max-width: 500px;
+}
+
+.modal-image-container img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.product-info {
+    flex: 1;
+    padding: 20px;
+}
+
+/* Modal Close Button */
+.close {
+    position: absolute;
+    right: 25px;
+    top: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+.close:hover {
+    color: #000;
+}
+
+/* Modal Content Styles */
+.price {
+    font-size: 24px;
+    color: var(--secondary-color);
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+.description h3 {
+    margin: 20px 0;
+    color: #333;
+}
+
+.description ul {
+    padding-left: 20px;
+}
+
+.description li {
+    margin: 12px 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* Modal Buttons */
+.modal .button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.modal .cart-btn,
+.modal .book-btn {
+    padding: 12px 25px;
+    font-size: 16px;
+}
+
+/* Shared Button Styles */
+.cart-btn, .book-btn {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cart-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.book-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.cart-btn:hover, 
+.book-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(110%);
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .grid-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .product-details {
+        flex-direction: column;
+    }
+    .modal-content {
+        width: 90%;
+        margin: 3% auto;
+    }
+    .modal-image-container img {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .grid-row {
+        grid-template-columns: 1fr;
+    }
+}
