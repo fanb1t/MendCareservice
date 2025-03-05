@@ -1,4 +1,6 @@
 <?php
+session_start();
+require_once 'connect.php';
 include 'sidebar.php';
 
 // Handle review submission

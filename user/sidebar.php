@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
             echo json_encode([
                 'status' => 'success',
                 'message' => 'ยินดีต้อนรับ Admin ' . $user["name"],
-                'redirect' => 'Addmin/ad_service_request.php',
+                'redirect' => '../Addmin/ad_service_request.php',
                 'user' => $user
             ]);
         } else {
@@ -198,7 +198,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
         <li><a href="ind.php"><i class="fas fa-home"></i> หน้าแรก</a></li>
 <?php if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']): 
 ?>
-            <li><a href="Addmin/ad_service_request.php"><i class="fas fa-tasks"></i> จัดการคำขอบริการ</a></li>
+            <li><a href="../Addmin/ad_service_request.php"><i class="fas fa-tasks"></i> จัดการคำขอบริการ</a></li>
 <?php endif;
 ?>
         <li><a href="success.php"><i class="fas fa-calendar-alt"></i> จองบริการ</a></li>

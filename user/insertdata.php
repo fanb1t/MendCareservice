@@ -1,10 +1,34 @@
+<?php
+ob_start(); // เริ่มเก็บ output buffer
+include 'sidebar.php';
 
-<?php
-ob_start(); // เริ่ม buffer เพื่อเก็บข้อมูลทั้งหมดก่อนส่งออก
-include 'sidebar.php'; ?> 
-<?php
 // รับค่า sub_service_id จาก URL
 $selected_sub_services = isset($_GET['items']) ? explode(',', $_GET['items']) : [];
+
+// ตรวจสอบว่ามี request_id ถูกส่งมาหรือไม่
+$request_id = isset($_GET['request_id']) ? intval($_GET['request_id']) : null;
+$request_data = [];
+$user_data = [];
+
+if ($request_id) {
+    // ดึงข้อมูล request และ user จากฐานข้อมูล
+    $stmt = $conn->prepare("
+        SELECT r.request_id, r.request_date, r.notes, u.name_last, u.address 
+        FROM requests r 
+        JOIN users u ON r.user_id = u.user_id 
+        WHERE r.request_id = ?
+    ");
+    $stmt->bind_param("i", $request_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $request_data = $result->fetch_assoc();
+        $user_data = [
+            'name_last' => $request_data['name_last'],
+            'address' => $request_data['address']
+        ];
+    }
+}
 
 // ในส่วนการบันทึกข้อมูล
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
@@ -14,40 +38,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
     $conn->begin_transaction();
 
     try {
-        // Update users table (บันทึกเฉพาะ name_last)
-        $stmt = $conn->prepare("UPDATE users SET name_last = ?, address = ? WHERE user_id = ?");
-        $stmt->bind_param("ssi", 
-            $_POST['name_last'], // เก็บชื่อและนามสกุลใน name_last
-            $_POST['address'],
-            $user_id
-        );
+        // ตรวจสอบว่ามีข้อมูลผู้ใช้อยู่แล้วหรือไม่
+        if (empty($user_data)) {
+            // ถ้าไม่มีข้อมูลผู้ใช้ ให้ทำการ insert
+            $stmt = $conn->prepare("INSERT INTO users (user_id, name_last, address) VALUES (?, ?, ?)");
+            $stmt->bind_param("iss", 
+                $user_id,
+                $_POST['name_last'],
+                $_POST['address']
+            );
+        } else {
+            // ถ้ามีข้อมูลผู้ใช้อยู่แล้ว ให้ทำการ update
+            $stmt = $conn->prepare("UPDATE users SET name_last = ?, address = ? WHERE user_id = ?");
+            $stmt->bind_param("ssi", 
+                $_POST['name_last'],
+                $_POST['address'],
+                $user_id
+            );
+        }
         $stmt->execute();
-    
-        // สร้าง request หลัก
-        $stmt = $conn->prepare("INSERT INTO requests (user_id, request_date, notes) VALUES (?, ?, ?)");
-        $stmt->bind_param("iss", 
-            $user_id, 
-            $request_date, 
-            $_POST['description']
-        );
+
+        // ตรวจสอบว่ามี request_id หรือไม่
+        if ($request_id) {
+            // อัปเดต request ที่มีอยู่
+            $stmt = $conn->prepare("UPDATE requests SET request_date = ?, notes = ? WHERE request_id = ?");
+            $stmt->bind_param("ssi", 
+                $request_date,
+                $_POST['description'],
+                $request_id
+            );
+        } else {
+            // สร้าง request ใหม่
+            $stmt = $conn->prepare("INSERT INTO requests (user_id, request_date, notes) VALUES (?, ?, ?)");
+            $stmt->bind_param("iss", 
+                $user_id, 
+                $request_date, 
+                $_POST['description']
+            );
+        }
         $stmt->execute();
         $request_id = $conn->insert_id;
-    
+
         // บันทึกบริการที่เลือกลงตาราง request_services
         foreach ($selected_sub_services as $sub_service_id) {
             $stmt = $conn->prepare("INSERT INTO request_services (request_id, sub_service_id) VALUES (?, ?)");
             $stmt->bind_param("ii", $request_id, $sub_service_id);
             $stmt->execute();
         }
-    
-        // ลบรายการในตะกร้า
-        $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND sub_service_id IN (" . str_repeat('?,', count($selected_sub_services) - 1) . '?)');
-        $params = array_merge([$user_id], $selected_sub_services);
-        $types = str_repeat('i', count($params));
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-    
+
         $conn->commit();
+        ob_end_clean(); // ล้าง output buffer ก่อนใช้ header
         header('Location: success.php');
         exit();
     } catch (Exception $e) {
@@ -284,11 +324,11 @@ input:focus, textarea:focus {
             <form onsubmit="event.preventDefault(); showConfirmation();" class="service-form">
                 <div class="form-group">
                     <label for="name_last">ชื่อ-นามสกุล</label>
-                    <input type="text" id="name_last" name="name_last" placeholder="กรุณากรอกชื่อ-นามสกุล">
+                    <input type="text" id="name_last" name="name_last" placeholder="กรุณากรอกชื่อ-นามสกุล" value="<?php echo isset($user_data['name_last']) ? $user_data['name_last'] : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label for="address">ที่อยู่</label>
-                    <textarea id="address" name="address" placeholder="กรุณากรอกที่อยู่"></textarea>
+                    <textarea id="address" name="address" placeholder="กรุณากรอกที่อยู่"><?php echo isset($user_data['address']) ? $user_data['address'] : ''; ?></textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -362,17 +402,17 @@ function showConfirmation() {
         return; // หยุดการทำงานหากข้อมูลไม่ครบ
     }
 
-    // อัปเดตข้อมูลในส่วนยืนยัน
-    document.getElementById('confirm-name').textContent = name_last || '-';
-    document.getElementById('confirm-address').textContent = address || '-';
-    document.getElementById('confirm-datetime').textContent = datetime ? formatDateTime(datetime) : '-';
-    document.getElementById('confirm-description').textContent = description || '-';
-
     // อัปเดตค่า hidden fields
     document.getElementById('hidden-name_last').value = name_last;
     document.getElementById('hidden-address').value = address;
     document.getElementById('hidden-datetime').value = datetime;
     document.getElementById('hidden-description').value = description;
+
+    // อัปเดตข้อมูลในส่วนยืนยัน
+    document.getElementById('confirm-name').textContent = name_last || '-';
+    document.getElementById('confirm-address').textContent = address || '-';
+    document.getElementById('confirm-datetime').textContent = datetime ? formatDateTime(datetime) : '-';
+    document.getElementById('confirm-description').textContent = description || '-';
 
     // แสดงส่วนยืนยันข้อมูล
     document.getElementById('form-section').style.display = 'none';

@@ -29,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-
 // ดึงข้อมูลบริการ
 $user_id = $_SESSION['user_id'];
 $sql = "SELECT r.request_id, r.request_date, r.notes, r.status,
@@ -236,7 +235,7 @@ $requests = $result->fetch_all(MYSQLI_ASSOC);
             grid-column: 1 / -1;
         }
 
-    </style>
+        </style>
 </head>
 <body>
     <div class="service-container">
@@ -308,22 +307,27 @@ $requests = $result->fetch_all(MYSQLI_ASSOC);
                             </div>
                         </div>
                     <?php endif; ?>
-                    <?php if($request['status'] == 'Confirm service request'): ?>
-                        <div class="action-buttons">
+                    <div class="action-buttons">
+                        <?php if($request['status'] == 'Pending' || $request['status'] == 'Reject service request'): ?>
+                            <!-- ปุ่มแก้ไขข้อมูล -->
+                            <a href="insertdata.php?request_id=<?php echo $request['request_id']; ?>" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> แก้ไขข้อมูล
+                            </a>
+                            <!-- ปุ่มลบบริการ -->
+                            <button onclick="handleDelete(<?php echo $request['request_id']; ?>, 'ลบ')" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> ลบบริการ
+                            </button>
+                        <?php elseif($request['status'] == 'Confirm service request'): ?>
+                            <!-- ปุ่มชำระบริการ -->
                             <a href="payment.php?request_id=<?php echo $request['request_id']; ?>" class="btn btn-primary">
                                 <i class="fas fa-credit-card"></i> ชำระค่าบริการ
                             </a>
-                            <button onclick="handleDelete(<?php echo $request['request_id']; ?>, 'ยกเลิก')" class="btn btn-danger">
-                                <i class="fas fa-times"></i> ยกเลิกบริการ
+                            <!-- ปุ่มลบบริการ -->
+                            <button onclick="handleDelete(<?php echo $request['request_id']; ?>, 'ลบ')" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> ลบบริการ
                             </button>
-                        </div>
-                    <?php elseif($request['status'] == 'Reject service request'): ?>
-                        <div class="action-buttons">
-                            <button onclick="handleDelete(<?php echo $request['request_id']; ?>, 'ยืนยัน')" class="btn btn-warning">
-                                <i class="fas fa-check"></i> ยืนยัน
-                            </button>
-                        </div>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -353,3 +357,4 @@ $requests = $result->fetch_all(MYSQLI_ASSOC);
     </script>
 </body>
 </html>
+

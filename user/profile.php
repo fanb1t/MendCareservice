@@ -1,4 +1,6 @@
 <?php
+session_start();
+require_once 'connect.php';
 require_once 'sidebar.php';
 
 // Check if user is logged in
