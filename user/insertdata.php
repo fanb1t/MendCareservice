@@ -1,4 +1,7 @@
-<?php include 'sidebar.php'; ?> 
+
+<?php
+ob_start(); // เริ่ม buffer เพื่อเก็บข้อมูลทั้งหมดก่อนส่งออก
+include 'sidebar.php'; ?> 
 <?php
 // รับค่า sub_service_id จาก URL
 $selected_sub_services = isset($_GET['items']) ? explode(',', $_GET['items']) : [];
@@ -11,12 +14,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
     $conn->begin_transaction();
 
     try {
-        // Update users table
-        $stmt = $conn->prepare("UPDATE users SET name_last = ?, address = ?, phone = ? WHERE user_id = ?");
-        $stmt->bind_param("sssi", 
-            $_POST['name'],
+        // Update users table (บันทึกเฉพาะ name_last)
+        $stmt = $conn->prepare("UPDATE users SET name_last = ?, address = ? WHERE user_id = ?");
+        $stmt->bind_param("ssi", 
+            $_POST['name_last'], // เก็บชื่อและนามสกุลใน name_last
             $_POST['address'],
-            $_POST['phone'],
             $user_id
         );
         $stmt->execute();
@@ -38,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
             $stmt->execute();
         }
     
-        // เพิ่มโค้ดตรงนี้ - ลบรายการในตะกร้า
+        // ลบรายการในตะกร้า
         $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND sub_service_id IN (" . str_repeat('?,', count($selected_sub_services) - 1) . '?)');
         $params = array_merge([$user_id], $selected_sub_services);
         $types = str_repeat('i', count($params));
@@ -48,8 +50,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
         $conn->commit();
         header('Location: success.php');
         exit();
-    
-
     } catch (Exception $e) {
         $conn->rollback();
         echo "<script>
@@ -69,7 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
-
 <style>
 :root {
     --primary-color: #d00000;
@@ -273,7 +272,6 @@ input:focus, textarea:focus {
     display: none;
 }
 </style>
-
 <body>
     <div class="container">
         <div class="progress">
@@ -285,32 +283,23 @@ input:focus, textarea:focus {
             <h1>กรอกข้อมูลการซ่อม</h1>
             <form onsubmit="event.preventDefault(); showConfirmation();" class="service-form">
                 <div class="form-group">
-                    <label for="name">ชื่อ-นามสกุล</label>
-                    <input type="text" id="name" name="name" placeholder="กรุณากรอกชื่อ-นามสกุล">
+                    <label for="name_last">ชื่อ-นามสกุล</label>
+                    <input type="text" id="name_last" name="name_last" placeholder="กรุณากรอกชื่อ-นามสกุล">
                 </div>
-
                 <div class="form-group">
                     <label for="address">ที่อยู่</label>
                     <textarea id="address" name="address" placeholder="กรุณากรอกที่อยู่"></textarea>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="datetime">วันที่และเวลานัดหมาย</label>
                         <input type="datetime-local" id="datetime" name="datetime">
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="description">รายละเอียดการซ่อม</label>
                     <textarea id="description" name="description" rows="4" placeholder="กรุณาระบุรายละเอียดการซ่อม"></textarea>
                 </div>
-
-                <div class="form-group">
-                    <label for="phone">เบอร์โทรศัพท์</label>
-                    <input type="tel" id="phone" name="phone" placeholder="กรุณากรอกเบอร์โทรศัพท์">
-                </div>
-
                 <button type="submit" class="btn-submit">ถัดไป <i class="fas fa-arrow-right"></i></button>
             </form>
         </div>
@@ -334,17 +323,12 @@ input:focus, textarea:focus {
                     <span class="label">รายละเอียดการซ่อม:</span>
                     <span id="confirm-description" class="value"></span>
                 </div>
-                <div class="confirm-item">
-                    <span class="label">เบอร์โทรศัพท์:</span>
-                    <span id="confirm-phone" class="value"></span>
-                </div>
             </div>
             <form action="" method="post" class="service-form">
-                <input type="hidden" name="name" id="hidden-name">
+                <input type="hidden" name="name_last" id="hidden-name_last">
                 <input type="hidden" name="address" id="hidden-address">
                 <input type="hidden" name="datetime" id="hidden-datetime">
                 <input type="hidden" name="description" id="hidden-description">
-                <input type="hidden" name="phone" id="hidden-phone">
                 <div class="button-group">
                     <button type="button" class="btn-back" onclick="goBack()">
                         <i class="fas fa-arrow-left"></i> แก้ไขข้อมูล
@@ -359,34 +343,43 @@ input:focus, textarea:focus {
 
 <script>
 function showConfirmation() {
-    // Get form values
-    const name = document.getElementById('name').value;
-    const address = document.getElementById('address').value;
-    const phone = document.getElementById('phone').value;
-    const datetime = document.getElementById('datetime').value;
-    const description = document.getElementById('description').value;
+    // ดึงค่าจากฟอร์ม
+    const name_last = document.getElementById('name_last').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const datetime = document.getElementById('datetime').value.trim();
+    const description = document.getElementById('description').value.trim();
 
-    // Update confirmation display
-    document.getElementById('confirm-name').textContent = name || '-';
+    // ตรวจสอบค่าว่าง
+    let errors = [];
+    if (!name_last) errors.push('ชื่อ-นามสกุล');
+    if (!address) errors.push('ที่อยู่');
+    if (!datetime) errors.push('วันที่และเวลานัดหมาย');
+    if (!description) errors.push('รายละเอียดการซ่อม');
+
+    // หากมีฟิลด์ว่าง
+    if (errors.length > 0) {
+        alert('กรุณากรอกข้อมูลให้ครบทุกช่อง: ' + errors.join(', '));
+        return; // หยุดการทำงานหากข้อมูลไม่ครบ
+    }
+
+    // อัปเดตข้อมูลในส่วนยืนยัน
+    document.getElementById('confirm-name').textContent = name_last || '-';
     document.getElementById('confirm-address').textContent = address || '-';
-    document.getElementById('confirm-phone').textContent = phone || '-';
     document.getElementById('confirm-datetime').textContent = datetime ? formatDateTime(datetime) : '-';
     document.getElementById('confirm-description').textContent = description || '-';
 
-    // Update hidden fields
-    document.getElementById('hidden-name').value = name;
+    // อัปเดตค่า hidden fields
+    document.getElementById('hidden-name_last').value = name_last;
     document.getElementById('hidden-address').value = address;
-    document.getElementById('hidden-phone').value = phone;
     document.getElementById('hidden-datetime').value = datetime;
     document.getElementById('hidden-description').value = description;
 
-    // Show confirmation section
+    // แสดงส่วนยืนยันข้อมูล
     document.getElementById('form-section').style.display = 'none';
     document.getElementById('confirmation-section').style.display = 'block';
     document.querySelector('.progress').classList.add('step-2');
     document.getElementById('step2').classList.add('active');
 }
-
 
 function goBack() {
     document.getElementById('form-section').style.display = 'block';
@@ -407,14 +400,6 @@ function formatDateTime(dateTimeStr) {
     });
 }
 
-function validateFormData(formData) {
-    return true;
-}
-
-function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('active');
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('form-section').style.display = 'block';
     document.getElementById('confirmation-section').style.display = 'none';
@@ -422,6 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('.progress').classList.remove('step-2');
 });
 </script>
-
 </body>
 </html>
+<?php
+ob_end_flush(); // ส่ง output ที่เก็บไว้ทั้งหมด
+?>

@@ -322,7 +322,7 @@ function calculateTotal($cart_items, $selected_items) {
                                 <h3><?php echo htmlspecialchars($item['name']); ?></h3>
                                 <p class="price">฿<?php echo number_format($item['price'], 2); ?></p>
                             </div>
-                            <button class="remove-btn" onclick="removeItem(<?php echo $item['cart_id']; ?>)">
+                            <button type="button" class="remove-btn" onclick="removeItem(event, <?php echo $item['cart_id']; ?>)">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -362,36 +362,38 @@ function calculateTotal($cart_items, $selected_items) {
 
     <script>
         // จัดการการลบรายการ
-        function removeItem(cartId) {
-            Swal.fire({
-                title: 'ยืนยันการลบ',
-                text: "คุณต้องการลบรายการนี้ใช่หรือไม่?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'ใช่, ลบรายการ',
-                cancelButtonText: 'ยกเลิก'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const formData = new FormData();
-                    formData.append('action', 'remove_item');
-                    formData.append('cart_id', cartId);
+    function removeItem(event, cartId) {
+        event.preventDefault(); // เพิ่มบรรทัดนี้
+        
+        Swal.fire({
+            title: 'ยืนยันการลบ',
+            text: "คุณต้องการลบรายการนี้ใช่หรือไม่?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ใช่, ลบรายการ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('action', 'remove_item');
+                formData.append('cart_id', cartId);
 
-                    fetch('CollectService.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            document.querySelector(`.cart-item[data-id="${cartId}"]`).remove();
-                            if (document.querySelectorAll('.cart-item').length === 0) {
-                                location.reload();
-                            }
+                fetch('CollectService.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.querySelector(`.cart-item[data-id="${cartId}"]`).remove();
+                        if (document.querySelectorAll('.cart-item').length === 0) {
+                            location.reload();
                         }
-                    });
-                }
-            });
-        }
+                    }
+                });
+            }
+        });
+    }
 
         // ดำเนินการชำระเงิน
         function proceedToCheckout() {

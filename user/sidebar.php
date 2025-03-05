@@ -196,9 +196,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     </span>
     <ul class="sidebar-menu">
         <li><a href="ind.php"><i class="fas fa-home"></i> หน้าแรก</a></li>
-        <?php if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
+<?php if(isset($_SESSION['is_admin']) && $_SESSION['is_admin']): 
+?>
             <li><a href="Addmin/ad_service_request.php"><i class="fas fa-tasks"></i> จัดการคำขอบริการ</a></li>
-        <?php endif; ?>
+<?php endif;
+?>
         <li><a href="success.php"><i class="fas fa-calendar-alt"></i> จองบริการ</a></li>
         <li><a href="status.php"><i class="fas fa-map-marker-alt"></i> ติดตามงาน</a></li>
         <li><a href="service_his.php"><i class="fas fa-history"></i> ประวัติการใช้บริการ</a></li>
@@ -262,11 +264,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     </div>
 </header>
 
-
-
 <script>
+// ตรวจสอบสถานะการเข้าสู่ระบบ
 const isUserLoggedIn = <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
-// Modal and Form Management
+
+// ฟังก์ชันเปิดปิด Modal Login
 const openLoginPopup = () => {
     const loginPopup = document.getElementById('loginPopup');
     const overlay = document.getElementById('overlay');
@@ -276,7 +278,6 @@ const openLoginPopup = () => {
     overlay.style.zIndex = '999999';
 };
 
-
 const closeLoginPopup = () => {
     const loginPopup = document.getElementById('loginPopup');
     const overlay = document.getElementById('overlay');
@@ -284,6 +285,7 @@ const closeLoginPopup = () => {
     overlay.classList.remove('active');
 };
 
+// สลับระหว่างฟอร์ม Login และ Register
 const showLoginForm = () => {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -298,7 +300,7 @@ const showRegisterForm = () => {
     registerForm.classList.add('active');
 };
 
-// Update handleLogin function
+// ฟังก์ชันจัดการการเข้าสู่ระบบ
 const handleLogin = async (event) => {
     event.preventDefault();
     
@@ -332,12 +334,7 @@ const handleLogin = async (event) => {
             if (data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                document.querySelector('.auth-links').innerHTML = `
-                    <span class="user-name">${data.user.name}</span>
-                    <a href="javascript:void(0);" onclick="handleLogout()" class="login-btn">
-                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-                    </a>
-                `;
+                window.location.reload(); // รีโหลดหน้าเว็บเพื่ออัปเดตสถานะ
             }
         } else {
             throw new Error(data.message);
@@ -353,6 +350,8 @@ const handleLogin = async (event) => {
         });
     }
 };
+
+// ฟังก์ชันจัดการการสมัครสมาชิก
 const handleRegister = async (event) => {
     event.preventDefault();
     
@@ -376,7 +375,7 @@ const handleRegister = async (event) => {
                     container: 'my-swal'
                 }
             });
-            window.location.reload();
+            window.location.reload(); // รีโหลดหน้าเว็บเพื่ออัปเดตสถานะ
         } else {
             throw new Error(data.message);
         }
@@ -392,6 +391,7 @@ const handleRegister = async (event) => {
     }
 };
 
+// ฟังก์ชันจัดการการออกจากระบบ
 const handleLogout = async () => {
     const formData = new FormData();
     formData.append('action', 'logout');
@@ -413,15 +413,14 @@ const handleLogout = async () => {
                     container: 'my-swal'
                 }
             });
-            window.location.reload();
+            window.location.reload(); // รีโหลดหน้าเว็บเพื่ออัปเดตสถานะ
         }
     } catch (error) {
         console.error('Logout error:', error);
     }
 };
 
-
-// Search Functionality
+// ฟังก์ชันค้นหาบริการ
 const searchServices = async (searchTerm) => {
     const searchResults = document.getElementById('searchResults');
     
@@ -477,14 +476,7 @@ const searchServices = async (searchTerm) => {
     }
 };
 
-const updateCartCount = (count) => {
-    const cartCountElement = document.querySelector('.cart-count');
-    if (cartCountElement) {
-        cartCountElement.textContent = count;
-    }
-};
-
-// Sidebar Toggle
+// ฟังก์ชันเปิดปิด Sidebar
 const toggleSidebar = () => {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -494,8 +486,7 @@ const toggleSidebar = () => {
     }
 };
 
-
-// Initialize Event Listeners
+// กำหนด Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.querySelector('#login-form form');
     const registerForm = document.querySelector('#register-form form');
@@ -519,9 +510,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-
-
 </script>
 </body>
 </html>
